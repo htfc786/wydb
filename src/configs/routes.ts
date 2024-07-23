@@ -1,26 +1,45 @@
 import { RouteRecordRaw } from "vue-router";
-import IndexPage from "../pages/IndexPage.vue";
+import IndexView from "../views/index.vue";
 
 /**
  * 路由列表
  */
 export default [
-  {
+  { // 首页
     path: "/",
-    component: IndexPage,
+    name: "index",
+    component: IndexView,
     props: true,
-  },
-  {
-    path: "/about",
-    component: () => import("../pages/AboutPage.vue"),
+  }, {  // collection文集
+    path: "/collection",
+    name: "collection",
+    redirect: "/collection/list",
     props: true,
-  },
-  // 404页面
-  {
+    children: [
+      { // 详细页面
+        path: ":id", 
+        name: "collection-index",
+        component: () => import("../views/collection/index.vue"), 
+        props: true,
+      },{ // 文集设置页面
+        path: ":id/edit", 
+        name: "collection-edit", 
+        component: () => import("../views/collection/edit.vue"),
+      },{ // 文集列表页面
+        path: "list",
+        name: "collection-list",
+        component: () => import("../views/collection/list.vue")
+      },{ // 新建文集页面  
+        path: "new", 
+        name: "collection-new",
+        component: () => import("../views/collection/new.vue") 
+      },
+    ],
+  }, { // 404页面
     path: "/404",
-    component: () => import("../pages/404Page.vue"),
-  },
-  {
+    name: "404",
+    component: () => import("../views/404Page.vue"),
+  }, {
     path: "/:pathMatch(.*)*",
     redirect: "/404",
   },
