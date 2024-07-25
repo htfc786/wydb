@@ -19,7 +19,7 @@ import type { Ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { message } from 'ant-design-vue';
 import API from '../../api';
-import collectionForm from '../../components/views/collectionForm.vue'
+import collectionForm from '../../components/views/collection/collectionForm.vue'
 
 const router = useRouter();
 
@@ -41,7 +41,7 @@ const onSubmit = () => {
   // 禁用提交
   isSubmitting.value = true;
   // 提交数据
-  API.wyCollection.addUsingPost(formState.value)
+  API.wyCollection.add(formState.value)
     .then((res) => {
       hide();
       // 判断是否成功

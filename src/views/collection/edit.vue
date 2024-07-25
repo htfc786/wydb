@@ -27,7 +27,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { message, Modal } from 'ant-design-vue';
 import { ExclamationCircleOutlined } from '@ant-design/icons-vue';
 import API from '../../api';
-import collectionForm from '../../components/views/collectionForm.vue'
+import collectionForm from '../../components/views/collection/collectionForm.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -46,8 +46,8 @@ const formRef = ref<any>({});
 // 获取数据
 onMounted(async () => {
   loading.value = true;
-  // 获取文集列表
-  const res = await API.wyCollection.getByIdUsingGet({
+  // 获取文集信息
+  const res = await API.wyCollection.getById({
     id: collectionId,
   });
   loading.value = false;
@@ -83,7 +83,7 @@ const onSubmit = () => {
   // 禁用提交
   isSubmitting = true;
   // 提交数据
-  API.wyCollection.putUsingPut({
+  API.wyCollection.change({
     id: collectionId
   }, collectionData.value)
     .then((res) => {
@@ -97,7 +97,7 @@ const onSubmit = () => {
       message.success('修改成功！');
       // 跳转到列表页
       router.push({ name: 'collection-index' });
-    }).catch((err) => {
+    }).catch((err: Error) => {
       // 错误
       hide();
       message.error('错误：' + err.message);
@@ -118,7 +118,7 @@ const onDelete = () => {
     onOk() {
       const hide = message.loading('删除中...', 0)
       // 开始删除
-      API.wyCollection.deleteUsingDelete({
+      API.wyCollection.deleteCollection({
         id: collectionId,
       }).then(() => {
         message.success('删除成功！');

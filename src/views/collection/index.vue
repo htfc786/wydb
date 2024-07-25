@@ -13,7 +13,7 @@
         </a-row>
         <a-divider></a-divider>
         <!--页面内容-->
-        <p>页面内容</p>
+        <RouterLink :to="{ name: 'article-new' }"><a-button type="primary">添加文章</a-button></RouterLink>
       </div>
     </a-spin>
   </div>
@@ -40,8 +40,8 @@ const loading = ref<boolean>(false);
 // 获取数据
 onMounted(async () => {
   loading.value = true;
-  // 获取文集列表
-  const res = await API.wyCollection.getByIdUsingGet({
+  // 获取文集信息
+  const res = await API.wyCollection.getById({
     id: collectionId,
   });
   loading.value = false;

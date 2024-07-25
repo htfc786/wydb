@@ -16,7 +16,7 @@
 import { onMounted, ref } from 'vue';
 import { message } from 'ant-design-vue';
 import API from '../../api';
-import collectionList from '../../components/views/collectionList.vue';
+import collectionList from '../../components/views/collection/collectionList.vue';
 
 // 文集数据
 const data = ref([] as API.WyCollection[]);
@@ -26,7 +26,7 @@ const loading = ref(false);
 onMounted(async () => {
   loading.value = true;
   // 获取文集列表
-  const res = await API.wyCollection.getUsingGet();
+  const res = await API.wyCollection.getAll();
   loading.value = false;
   // 如果请求失败，则不更新数据
   if (res.data.code !== 200) {

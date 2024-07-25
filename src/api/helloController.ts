@@ -3,7 +3,7 @@
 import request from '@/request.ts';
 
 /** hello GET /hello */
-export async function helloUsingGet(options?: { [key: string]: any }) {
+export async function hello(options?: { [key: string]: any }) {
   return request<string>('/hello', {
     method: 'GET',
     ...(options || {}),

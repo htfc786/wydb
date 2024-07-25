@@ -2,7 +2,7 @@
 // https://github.com/liyupi/yudada/blob/master/yudada-frontend/src/request.ts
 
 import axios from "axios";
-// import { message } from 'ant-design-vue';
+import { message } from 'ant-design-vue';
 
 const myAxios = axios.create({
   baseURL: "/api",
@@ -48,6 +48,12 @@ myAxios.interceptors.response.use(
   function (error) {
     // Any status codes that falls outside the range of 2xx cause this function to trigger
     // Do something with response error
+    // console.log(error);
+    if (error.code === "ECONNABORTED") {
+      message.error("网络异常：请求超时！");
+      // message.error("网络不给力，请检查网络连接，或刷新页面重试！");
+    }
+
     return Promise.reject(error);
   }
 );

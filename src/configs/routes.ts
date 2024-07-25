@@ -35,6 +35,17 @@ export default [
         component: () => import("../views/collection/new.vue") 
       },
     ],
+  }, { // article文章
+    path: "/collection/:id/article", 
+    props: true,
+    children: [
+      { // 新建文章页面  
+        path: "new",
+        name: "article-new",
+        // component: () => import("../views/article/new.vue"),
+        redirect: "/404",
+      },
+    ]
   }, { // 404页面
     path: "/404",
     name: "404",

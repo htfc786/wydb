@@ -65,8 +65,6 @@ const resetForm = () => {
 // 备份数据
 const backupData = ref({} as any);
 const backupForm = () => {
-  console.log('backupForm');
-  console.log(props.formData);
   backupData.value = { ...props.formData };
 };
 //导出函数
