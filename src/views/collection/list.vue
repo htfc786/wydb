@@ -19,7 +19,7 @@ import API from '../../api';
 import collectionList from '../../components/views/collection/collectionList.vue';
 
 // 文集数据
-const data = ref([] as API.WyCollection[]);
+const data = ref<API.WyCollection[]>([]);
 // loading状态
 const loading = ref(false);
 
@@ -31,6 +31,11 @@ onMounted(async () => {
   // 如果请求失败，则不更新数据
   if (res.data.code !== 200) {
     message.error('错误：' + res.data.message);
+    return;
+  }
+  // 放数据
+  if (!res.data.data) {
+    data.value = []
     return;
   }
   data.value = res.data.data;

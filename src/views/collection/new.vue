@@ -55,6 +55,11 @@ const onSubmit = () => {
       formState.value.name = '';
       formState.value.description = '';
       // 获取新的文集的id
+      if (!res.data.data || !res.data.data.id) {
+        message.error('错误：获取文集id失败');
+        router.push({ name: 'collection-list' });
+        return;
+      }
       const id = res.data.data.id;
       // 跳转到列表页
       router.push({ name: 'collection-index', params: { id } });

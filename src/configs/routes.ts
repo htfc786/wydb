@@ -36,14 +36,18 @@ export default [
       },
     ],
   }, { // article文章
-    path: "/collection/:id/article", 
+    path: "/collection/:collectionId/article", 
     props: true,
     children: [
-      { // 新建文章页面  
+      { // 文章页面
+        path: ":id", 
+        name: "article-index",
+        component: () => import("../views/article/index.vue"), 
+        props: true,
+      }, { // 新建文章页面  
         path: "new",
         name: "article-new",
-        // component: () => import("../views/article/new.vue"),
-        redirect: "/404",
+        component: () => import("../views/article/new.vue"),
       },
     ]
   }, { // 404页面

@@ -62,7 +62,11 @@ onMounted(async () => {
     return;
   }
   // 更新数据
-  collectionName.value = res.data.data.name;
+  if (!res.data.data) {
+    message.error('错误：暂无数据');
+    return;
+  }
+  collectionName.value = res.data.data?.name || "";
   collectionData.value = res.data.data;
   // 设置备份
   nextTick(() => {
