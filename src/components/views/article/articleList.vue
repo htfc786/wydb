@@ -9,7 +9,7 @@
     <template #renderItem="{ item }">
       <!-- 列表 -->
       <a-list-item style="padding: 0 4px;">
-        <article-card :collectionId="collectionId" :id="item.id" :title="item.name" :dynasty="item.dynasty" :writer="item.writer"/>
+        <article-card :collectionId="collectionId" :id="item.id" :title="item.name" :dynasty="item.dynasty" :writer="item.writer" :content="item.content"/>
       </a-list-item>
     </template>
   </a-list>

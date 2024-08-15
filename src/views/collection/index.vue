@@ -8,7 +8,7 @@
       <div class="content">
         <!--页面头部-->
         <a-row class="header" type="flex" align="middle" justify="space-between">
-          <a-col flex="auto"><h2>{{ collectionName }}</h2></a-col>
+          <a-col flex="auto"><h2 class="title">{{ collectionName }}</h2></a-col>
           <a-col>
             <a-button type="primary" @click="openNewArticle">新建文章</a-button>
             <a-button style="margin-left:10px;" @click="goEdit">编辑</a-button>
@@ -16,14 +16,6 @@
         </a-row>
         <a-divider></a-divider>
         <!--页面内容-->
-        <!-- <RouterLink :to="{ name: 'article-new' }"><a-button type="primary">添加文章</a-button></RouterLink> -->
-        <!-- <article-card title="桃花源记" writer="陶渊明" dynasty="东晋" content="晋太元中，武陵人捕鱼为业。缘溪行，忘路之远近。忽逢桃花林，夹岸数百步，中无杂树，芳草鲜美，落英缤纷。渔人甚异之，复前行，欲穷其林。" :tags="['九年级上','必背','中考重点']" />
-        <br/>
-        <article-card title="劝学" writer="荀子" dynasty="先秦" :content="'君子曰：学不可以已。\n青，取之于蓝，而青于蓝；冰，水为之，而寒于水。木直中绳，輮以为轮，其曲中规。虽有槁暴，不复挺者，輮使之然也。故木受绳则直，金就砺则利，君子博学而日参省乎己，则知明而行无过矣。'" :tags="['高中语文必修一','必背','高考重点']" />
-        <br/>
-        <article-card title="闻王昌龄左迁龙标遥有此寄" writer="李白" dynasty="唐" :content="'杨花落尽子规啼，闻到龙标过五溪。\n我寄愁心于明月，随君直到夜郎西。'" :tags="['七年级上','必背','中考古诗']" />
-        <br/>
-        <article-card title="次北固山下" writer="王湾" dynasty="唐" :content="'客路青山外，行舟绿水前。\n潮平两岸阔，风正一帆悬。\n海日生残夜，江春入旧年。\n乡书何处达？归雁洛阳边。'" :tags="['七年级上','必背','中考古诗']" /> -->
         <article-card-list :collectionId="collectionId" :data="articleList" />
       </div>
     </a-spin>
@@ -151,16 +143,16 @@ const newArticle = () => {
       message.error('错误：' + res.data.message);
       return;
     }
-    message.success('新建成功');
     // 获取新文章id
     if (!res.data.data || !res.data.data.id) {
       message.error('错误：更新新文章 id 失败');
       return;
     }
     const newArticleId = res.data.data.id;
+    message.success('新建成功');
     // 跳转到编辑页
     router.push({
-      name: 'article-index',
+      name: 'article-edit',
       params: { collectionId, id: newArticleId }
     });
   }).catch(err => {
@@ -178,8 +170,9 @@ const newArticle = () => {
 .content {
   margin: 24px;
 }
-.header h2 {
+.header .title {
   margin: 0 auto;
+  margin-bottom: 4px;
 }
 .new-article-modal .ant-form {
   width: 75%;

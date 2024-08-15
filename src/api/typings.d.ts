@@ -1,7 +1,20 @@
 declare namespace API {
+  type addUsingPOST2Params = {
+    /** articleId */
+    articleId: number;
+    /** collectionId */
+    collectionId: number;
+  };
+
   type addUsingPOSTParams = {
     /** collectionId */
     collectionId: number;
+  };
+
+  type BaseResponseListListWyContent_ = {
+    code?: number;
+    data?: WyContent[][];
+    message?: string;
   };
 
   type BaseResponseListWyCollection_ = {
@@ -58,6 +71,13 @@ declare namespace API {
     id: number;
   };
 
+  type changeUsingPUT2Params = {
+    /** articleId */
+    articleId: number;
+    /** collectionId */
+    collectionId: number;
+  };
+
   type changeUsingPUTParams = {
     /** collectionId */
     collectionId: number;
@@ -94,6 +114,20 @@ declare namespace API {
     id: number;
   };
 
+  type getStringUsingGETParams = {
+    /** articleId */
+    articleId: number;
+    /** collectionId */
+    collectionId: number;
+  };
+
+  type getUsingGETParams = {
+    /** articleId */
+    articleId: number;
+    /** collectionId */
+    collectionId: number;
+  };
+
   type getWithNoCollectionUsingGETParams = {
     /** id */
     id: number;
@@ -119,9 +153,25 @@ declare namespace API {
     newCollectionId: number;
   };
 
+  type ReqWyContentAddString = {
+    /** 文章内容 */
+    content: string;
+    /** 段 */
+    paragraph?: number;
+    /** 句子 */
+    sentence?: number;
+  };
+
+  type ReqWyContentChange = {
+    /** 文章内容 */
+    content: string;
+  };
+
   type ResWyArticleGet = {
     collection?: WyCollection;
-    /** 创建日期 */
+    /** 文章内容(json) */
+    content?: WyContent[][];
+    /** 文章创建时间 */
     createdAt?: string;
     /** 文章被写成时的的朝代（年份） */
     dynasty?: string;
@@ -140,14 +190,35 @@ declare namespace API {
   };
 
   type ResWyArticleGetList = {
-    articleList?: WyArticle[];
+    articleList?: ResWyArticleGetListArticle[];
     collection?: WyCollection;
+  };
+
+  type ResWyArticleGetListArticle = {
+    /** 文章简短内容 */
+    content?: string;
+    /** 创建日期 */
+    createdAt?: string;
+    /** 文章被写成时的的朝代（年份） */
+    dynasty?: string;
+    /** id */
+    id?: number;
+    /** 文言文文章名称 */
+    name?: string;
+    /** 文章选自的书籍 */
+    source?: string;
+    /** 文章作者 */
+    writer?: string;
   };
 
   type WyArticle = {
     /** 所属集合ID，关联collection表 */
     collectionId?: number;
-    /** 创建日期 */
+    /** 文章内容(json) */
+    content?: string;
+    /** 文章内容(文字) */
+    contentString?: string;
+    /** 文章创建时间 */
     createdAt?: string;
     /** 文章被写成时的的朝代（年份） */
     dynasty?: string;
@@ -181,5 +252,14 @@ declare namespace API {
     id?: number;
     /** 文集名称 */
     name?: string;
+  };
+
+  type WyContent = {
+    /** 句子内容 */
+    content?: string;
+    /** [文章句子注音（列表） */
+    pinyin?: string[];
+    /** 文章句子翻译 */
+    translation?: string;
   };
 }
