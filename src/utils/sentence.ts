@@ -69,12 +69,23 @@ export function isOneWordPerLine(inputString: string): boolean {
   const lines = inputString.split('\n');
   // 计算每行中汉字的数量
   const chineseCounts = lines.map(line => line.match(/[\u4e00-\u9fa5]/g)?.length || 0);
+  // chineseCounts不用每个都符合条件，只要有10个即可
+  let checkNum = 10;
   // 判断输入类型 0,1,0,1,0,1 => 是一行一字：字\n拼音\n字\n拼音\n字\n拼音\n
-  return (chineseCounts.every((count, index) => 
+  const checkFunc = (count: any, index: number) => 
       index + 1 === chineseCounts.length ||   // 最后一个字符
       count === 1 && chineseCounts[index + 1] === 0 || // 字后面是拼音
-      count === 0 && chineseCounts[index + 1] === 1) || // 拼音后面是字
-    chineseCounts.every(count => count === 1)); // 字
+      count === 0 && chineseCounts[index + 1] === 1 || // 拼音后面是字
+      count === 1 && chineseCounts[index + 1] === 1; // 全是字
+  for (let i = 0; i < chineseCounts.length; i++) {
+    if (checkFunc(chineseCounts[i], i)) {
+      checkNum--;
+      if (checkNum === 0) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 // 批量添加：分割句子

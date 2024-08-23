@@ -25,19 +25,50 @@ export function getTone(pinyin: string): 0 | 1 | 2 | 3 | 4 {
 // 更改拼音声调
 export function changeTone(pinyin: string, tone: 0 | 1 | 2 | 3 | 4) {
   if (!pinyin) return "";
+
+  const PINYIN_REGEX = { 
+    a: /[aāáǎà]/, 
+    o: /[oōóǒò]/, 
+    e: /[eēéěè]/, 
+    i: /[iīíǐì]/, 
+    u: /[uūúǔù]/, 
+    v: /[vüǖǘǚǜ]/, 
+    jqx: /[jqx]/ 
+  };
+
+  // jqx 小淘气，见到鱼眼要挖去
+  if (pinyin.match(PINYIN_REGEX.jqx) && pinyin.match(PINYIN_REGEX.v)) {
+    const oU = PINYIN_REGEX.v.exec(pinyin) || '';
+    const OTone = getTone(oU[0]);
+    pinyin = pinyin.replace(PINYIN_REGEX.v, changeTone('u', OTone));
+  }
+  
   // [aāáǎà] [oōóǒò] [eēéěè] [iīíǐì] [uūúǔù] [üǖǘǚǜ]
-  if (pinyin.match(/[aāáǎà]/)) {
-    return pinyin.replace(/[aāáǎà]/, ['a','ā','á','ǎ','à'][tone]);
-  } else if (pinyin.match(/[oōóǒò]/)) {
-    return pinyin.replace(/[oōóǒò]/, ['o','ō','ó','ǒ','ò'][tone]);
-  } else if (pinyin.match(/[eēéěè]/)) {
-    return pinyin.replace(/[eēéěè]/, ['e','ē','é','ě','è'][tone]);
-  } else if (pinyin.match(/[iīíǐì]/)) {
-    return pinyin.replace(/[iīíǐì]/, ['i','ī','í','ǐ','ì'][tone]);
-  } else if (pinyin.match(/[uūúǔù]/)) {
-    return pinyin.replace(/[uūúǔù]/, ['u','ū','ú','ǔ','ù'][tone]);
-  } else if (pinyin.match(/[üǖǘǚǜ]/)) {
-    return pinyin.replace(/[vüǖǘǚǜ]/, ['ü','ǖ','ǘ','ǚ','ǜ'][tone]);
+  if (pinyin.match(PINYIN_REGEX.a)) {
+    return pinyin.replace(PINYIN_REGEX.a, ['a','ā','á','ǎ','à'][tone]);
+  } else if (pinyin.match(PINYIN_REGEX.o)) {
+    return pinyin.replace(PINYIN_REGEX.o, ['o','ō','ó','ǒ','ò'][tone]);
+  } else if (pinyin.match(PINYIN_REGEX.e)) {
+    return pinyin.replace(PINYIN_REGEX.e, ['e','ē','é','ě','è'][tone]);
+  } else if (pinyin.match(PINYIN_REGEX.i)) {
+    // i u 都有标在后
+    if (pinyin.match(PINYIN_REGEX.u)) {
+      // 查找位置
+      const i_match = PINYIN_REGEX.i.exec(pinyin)
+      const u_match = PINYIN_REGEX.u.exec(pinyin)
+      if (i_match && u_match) {
+        if (i_match.index < u_match.index) {  // i在前
+          return pinyin.replace(PINYIN_REGEX.u, ['u','ū','ú','ǔ','ù'][tone]);
+        } else { // u在前
+          return pinyin.replace(PINYIN_REGEX.i, ['i','ī','í','ǐ','ì'][tone]);
+        }
+      }
+    }
+    return pinyin.replace(PINYIN_REGEX.i, ['i','ī','í','ǐ','ì'][tone]);
+  } else if (pinyin.match(PINYIN_REGEX.u)) {
+    return pinyin.replace(PINYIN_REGEX.u, ['u','ū','ú','ǔ','ù'][tone]);
+  } else if (pinyin.match(PINYIN_REGEX.v)) {
+    return pinyin.replace(PINYIN_REGEX.v, ['ü','ǖ','ǘ','ǚ','ǜ'][tone]);
   } else {
     return pinyin;
   }

@@ -1,12 +1,13 @@
 <template>
+  <a-spin :spinning="loading">
   <div class="article-edit">
     <a-breadcrumb>
       <a-breadcrumb-item><RouterLink :to="{ name: 'index' }">首页</RouterLink></a-breadcrumb-item>
-      <a-breadcrumb-item><RouterLink :to="{ name: 'collection-index', params: { id: collectionId } }">{{ collectionName }}</RouterLink></a-breadcrumb-item>
-      <a-breadcrumb-item><RouterLink :to="{ name: 'article-index', params: { id: articleId, collectionId: collectionId }}">{{ articleName }}</RouterLink></a-breadcrumb-item>
+      <a-breadcrumb-item><RouterLink :to="{ name: 'collection-index', params: { id: collectionIdRef } }">{{ collectionName }}</RouterLink></a-breadcrumb-item>
+      <a-breadcrumb-item><RouterLink :to="{ name: 'article-index', params: { id: articleId, collectionId: collectionIdRef }}">{{ articleName }}</RouterLink></a-breadcrumb-item>
       <a-breadcrumb-item>编辑</a-breadcrumb-item>
     </a-breadcrumb>
-
+    <!-- 信息部分 -->
     <div class="info">
       <a-row justify="space-between" style="width: 100%; align-items: center;">
         <a-col>
@@ -40,40 +41,68 @@
       </a-row>
       <a-divider style="margin-top: 0; margin-bottom: 20px;"></a-divider>
     </div>
-   
+    <!-- 主页编辑部分 -->
     <div class="main">
       <div class="bar">
         <div class="info">
-          <h1 class="title">{{ articleName }}</h1>
+          <h1 class="title" :style="{ maxWidth: barTitleMaxWidth + 'px' }">{{ articleName }}</h1>
           <a-tag>{{ articleId }}</a-tag>
-          <div class="save-info" :class="{'save': isSave}">
-            <template v-if="isSave"><CheckCircleOutlined /><span>已保存</span></template>
-            <template v-else><ExclamationCircleOutlined /><span>未保存</span></template>
+          <div class="save-info" :class="{ 'save': saveType === 0, 'not-save': saveType === 1, 'loading': saveType === 2}">
+            <template v-if="saveType === 0"><CheckCircleOutlined /><span>已保存</span></template>
+            <template v-else-if="saveType === 1"><ExclamationCircleOutlined /><span>未保存</span></template>
+            <template v-else-if="saveType === 2"><LoadingOutlined /><span>保存中...</span></template>
           </div>
         </div>
         <div class="btn-list">
-          <a-button type="primary" @click="save">保存</a-button>
-          <a-button @click="editMoreInfo">修改更多...</a-button>
+          <a-button class="save" type="primary" @click="save" :loading="saveType === 2">保存{{ saveType === 2 ? '中...' : ''}}</a-button>
+          <a-button class="fresh" type="link" @click="fresh">刷新...</a-button>
+          <a-button class="more" type="link" @click="editMoreInfo">修改更多...</a-button>
         </div>
       </div>
-
-      <contentEdit ref="contentEditRef" :data="articleContent" />
+      <a-skeleton active :loading="loading">
+        <contentEdit ref="contentEditRef" :data="articleContent" />
+        <template v-if="articleContent.length === 0">
+          <a-empty description="暂无内容！">
+            <a-space>
+              <a-button type="primary" @click="batchAdd">批量添加</a-button>
+              <a-button @click="addOnce">添加一段</a-button>
+            </a-space>
+          </a-empty>
+        </template>
+      </a-skeleton>
     </div>
-
+    <!-- 底部, 修改更多文章相关内容 -->
+    <div class="option">
+      <a-divider></a-divider>
+      <h3>文章选项</h3>
+      <a-space style="flex-direction: column; align-items: flex-start;">
+        <a-button type="primary" @click="editMoreInfo">修改信息</a-button>
+        <a-button @click="editCollection">移动文章</a-button>
+        <a-button type="primary" danger @click="showDeleteArticle">删除文章</a-button>
+      </a-space>
+    </div>
   </div>
+  </a-spin>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, h, watch } from 'vue'
-import { useRoute, onBeforeRouteLeave } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import { message, Modal } from 'ant-design-vue'
-import { ExclamationCircleOutlined, QuestionCircleOutlined, CheckCircleOutlined } from '@ant-design/icons-vue'
+import { 
+  ExclamationCircleOutlined,
+  QuestionCircleOutlined, 
+  CheckCircleOutlined, 
+  LoadingOutlined 
+} from '@ant-design/icons-vue'
 import API from '../../api'
 import { debounce } from '@/utils/debounce'
 import contentEdit from '@/components/views/content/edit/content.vue'
 import articleForm from '@/components/views/article/articleForm.vue'
+import changeCollection from '@/components/views/article/changeCollection.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 /* 预计功能：
 多选删除
@@ -81,27 +110,38 @@ const route = useRoute()
 批量添加支持翻译
 多选后更改
 ctrl+z撤回
+json导入导出
+优化: 页面可见时在渲染ui
 */
 const contentEditRef = ref<typeof contentEdit>();
 // 文集
-const collectionId = <number>+route.params.collectionId
+let collectionId = <number>+route.params.collectionId
 const collectionName = ref('id:' + collectionId)
+const collectionIdRef = ref(collectionId)
+watch(collectionIdRef, (val) => { collectionId = val })
 // 文章
-const articleId = <number>+route.params.id
+let articleId = <number>+route.params.id
 const articleName = ref('id:' + articleId)
 const articleContent = ref<API.WyContent[][]>([])
 const articleData = ref<API.ResWyArticleGet>({})
+// 保存状态
+// 0: 保存成功 1: 未保存 2: 保存中
+const saveType = ref(0);
+const isSave = () => saveType.value === 0;
 
-const isSave = ref(false);
-
+const loading = ref(true)
 // 获取文章内容信息
 const getArticleInfo = () => {
   const hide = message.loading('加载中...', 0);
-  API.wyArticle
+  loading.value = true
+  return API.wyArticle
     .getById({ collectionId, id: articleId })
     .then((res) => {
       if (res.data.code !== 200) {
         message.error('错误：' + res.data.message)
+        if (res.data.code === 404) {
+          router.push({ name: '404' })
+        }
         return
       }
       // 获取新文章id
@@ -116,7 +156,7 @@ const getArticleInfo = () => {
       articleData.value = res.data.data
       // 默认没有内容显示添加面板
       if (!articleContent.value.length) {
-        contentEditRef.value?.add()
+        batchAdd()
       }
     })
     .catch((err) => {
@@ -124,8 +164,15 @@ const getArticleInfo = () => {
     })
     .finally(() => {
       hide();
+      loading.value = false
     })
-  isSave.value = true;
+  saveType.value = 0; // 保存成功
+}
+//刷新
+const fresh = () => {
+  getArticleInfo()?.then(() => {
+    message.success('刷新成功')
+  })
 }
 
 let isRunningSave = false;
@@ -145,8 +192,8 @@ const save = () => {
 
   isRunningSave = true
   // 保存文章
+  saveType.value = 2; // 保存中
   const hide = message.loading('保存中...', 0);
-  isSave.value = true;
   return API.wyContent
     .change(
       { collectionId, articleId }, 
@@ -154,7 +201,7 @@ const save = () => {
     )
     .then((res) => {
       if (res.data.code !== 200) {
-        message.error('错误：' + res.data.message)
+        message.error('保存错误：' + res.data.message)
         return
       }
       // 获取新文章id
@@ -164,11 +211,12 @@ const save = () => {
       }
       articleContent.value = res.data.data || []
       // 保存成功
+      saveType.value = 0; // 保存成功
       message.success('保存成功')
     })
     .catch((e)=>{
-      message.error('错误：' + e.message)
-      isSave.value = false;
+      message.error('保存错误：' + e.message)
+      saveType.value = 1; // 未保存
     })
     .finally(() => {
       hide();
@@ -180,7 +228,7 @@ const autoSave = debounce(() => {
   if (isRunningSave) {
     return;
   }
-  if (isSave.value) {
+  if (isSave()) {
     return;
   }
   save();
@@ -205,7 +253,7 @@ watch(() => articleContent.value, () => {
     return;
   }
   // console.log("deep watch...");
-  isSave.value = false;
+  saveType.value = 1; // 未保存
   autoSave()
 }, { deep: true })
 
@@ -272,10 +320,106 @@ const editMoreInfo = () => {
   });
 }
 
+// 修改保存位置
+const changeCollectionSubmit = (newCollectionId: number) => {
+  const hide = message.loading('移动中...', 0);
+  return API.wyArticle
+    .changeCollection({ id: articleId, collectionId }, { newCollectionId })
+    .then((res) => {
+      if (res.data.code !== 200 || !res.data.data) {
+        message.error('错误：' + res.data.message)
+        return;
+      }
+      if (!res.data.data || !res.data.data?.collection?.id || res.data.data.collection.id !== newCollectionId) {
+        message.error('移动失败')
+        return;
+      } 
+      // 更新信息
+      collectionIdRef.value = res.data.data.collection.id;
+      collectionName.value = res.data.data.collection?.name || 'id:' + collectionIdRef.value;
+      // 跳转
+      router.replace({
+        name: 'article-edit',
+        params: { id: articleId, collectionId: collectionIdRef.value },
+      })
+      message.success('移动成功')
+    })
+    .catch(e=>{
+      message.error('错误：' + e.message)
+    })
+    .finally(() => {
+      hide();
+    });
+};
+// 编辑所在位置
+const editCollection = () => {
+  const modal = Modal.confirm({
+    title: '移动到...',
+    icon: null,
+    footer: null,
+    closable: true,
+    content: () => h(changeCollection, {
+      articleId: articleId,
+      collectionId: collectionId,
+      collection: collectionName.value,
+      'onSubmit': (newCollectionId: number) => {
+        changeCollectionSubmit(newCollectionId).then(()=>{
+          modal.destroy();
+        })
+      },
+    }),
+  });
+}
+
+// 删除文章
+const deleteArticle = () => {
+  const hide = message.loading('删除中...', 0);
+  return API.wyArticle
+    .deleteArticle({ collectionId, id: articleId })
+    .then(res => {
+      if (res.data.code !== 200) {
+        message.error('错误：' + res.data.message)
+        return
+      }
+      message.success('删除成功！')
+      router.push({
+        name: 'collection-index',
+        params: { id: collectionId },
+      })
+    })
+    .catch(err => {
+      message.error('错误：' + err.message)
+    })
+    .finally(() => {
+      hide()
+    })
+}
+const showDeleteArticle = () => {
+  Modal.confirm({
+    title: '确定要删除这篇文章吗？',
+    icon: h(ExclamationCircleOutlined),
+    content: '文章删除后不可恢复',
+    okText: '确定',
+    cancelText: '取消',
+    onOk() {
+      return deleteArticle()
+    },
+  });
+}
+
+// 无内容时调用的添加
+const batchAdd = () => {
+  contentEditRef.value?.add()
+}
+// 添加一段
+const addOnce = () => {
+  articleContent.value.push([])
+}
+
 // 退出页面前保存
 onBeforeRouteLeave((to, from, next: Function) => {
   to; from; // 解决ts报错
-  if (isSave.value) {
+  if (isSave()) {
     next();
     return;
   }
@@ -306,8 +450,8 @@ onBeforeRouteLeave((to, from, next: Function) => {
   });
 });
 // 退出整个网页时的提示
-watch(isSave, () => {
-  if (isSave.value) {
+watch(saveType, () => {
+  if (isSave()) {
     window.onbeforeunload = null;
   } else {
     window.onbeforeunload = function() { 
@@ -315,6 +459,17 @@ watch(isSave, () => {
     }
   }
 }, { immediate: true })
+
+// bar处标题的最大宽度
+const barTitleMaxWidth = ref(document.body.clientWidth - 469);
+// 监听窗口大小变化
+const _maxWidthChange = () => {
+  // 总clientWidth - 最外层padding,24x2,48px - .btn-list,180.953px,181px - .save-info,72px - .a-tag的宽度
+  const aTagWidth = (document.querySelector('.a-tag') as HTMLElement)?.clientWidth || 0;// 获取.a-tag的宽度
+  const btnListWidth = (document.querySelector('.btn-list') as HTMLElement)?.clientWidth || 0;// 获取.btn-list的宽度
+  const saveInfoWidth = (document.querySelector('.save-info') as HTMLElement)?.clientWidth || 0;// 获取.save-info的宽度
+  barTitleMaxWidth.value = document.body.clientWidth - aTagWidth - btnListWidth - saveInfoWidth - 48 - 60;// 计算最大宽度
+}
 
 // ctrl+s 保存
 const handleSave = (e: KeyboardEvent) => {
@@ -326,11 +481,14 @@ const handleSave = (e: KeyboardEvent) => {
 
 onMounted(() => {
   document.addEventListener('keydown', handleSave)
+  window.addEventListener('resize', _maxWidthChange);
+  _maxWidthChange();
   // 初始化数据
   getArticleInfo()
 })
 onUnmounted(() => {
   document.removeEventListener('keydown', handleSave)
+  window.removeEventListener('resize', _maxWidthChange);
   window.onbeforeunload = null;
 })
 
@@ -368,6 +526,7 @@ onUnmounted(() => {
   z-index: 998;
   padding: 6px 0;
   margin: 4px 0;
+  height: 44px;
 }
 .article-edit .bar .info {
   display: flex;
@@ -377,14 +536,23 @@ onUnmounted(() => {
   font-size: 20px;
   margin-bottom: 0;
   margin-right: 8px;
+  /* 自动省略号 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .article-edit .bar .info .save-info {
   display: flex;
   align-items: center;
-  color: red;
 }
 .article-edit .bar .info .save-info.save {
   color: green;
+}
+.article-edit .bar .info .save-info.not-save {
+  color: red;
+}
+.article-edit .bar .info .save-info.loading {
+  color: #1677ff;
 }
 .article-edit .bar .info .save-info>span {
   margin-right: 4px;
@@ -410,7 +578,13 @@ onUnmounted(() => {
   align-items: center;
   flex-direction: row-reverse;
 }
-.article-edit .bar .btn-list .ant-btn {
+.article-edit .bar .btn-list .ant-btn.save {
   margin-right: 10px;
+}
+.article-edit .bar .btn-list .ant-btn.fresh {
+  margin-right: -4px;
+}
+.article-edit .bar .btn-list .ant-btn.more {
+  margin-right: -20px;
 }
 </style>
