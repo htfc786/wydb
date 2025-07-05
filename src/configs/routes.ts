@@ -17,6 +17,16 @@ export default [
     },
   },
   {
+    // 训练场
+    path: '/exercise',
+    name: 'exercise',
+    component: () => import('../pages/exercise/Index.vue'),
+    meta: {
+      title: '训练场',
+      showInMenu: true,
+    },
+  },
+  {
     // abuot
     path: '/about',
     name: 'about',
