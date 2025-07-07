@@ -1,68 +1,105 @@
 <template>
   <div class="sentenceItem">
-
+    <!-- 原文行 -->
+    <div class="line original" ref="original">
+      <span class="word" v-for="word in originalWords" :key="word.text">
+        {{ word.text }}
+      </span>
+    </div>
+    <!-- 分割线 -->
+    <div class="divider"></div>
+    <!-- 翻译行 -->
+    <div class="line translation" ref="translation">
+      <span class="word" v-for="word in translationWords" :key="word.text">
+        {{ word.text }}
+      </span>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
-import type { exerciseSentence } from "../../../types";
+import { computed, onMounted, ref, useTemplateRef } from "vue";
+import type { wySentence } from "../../../types";
 
-const sentenceData = ref(<exerciseSentence>{
-  original: {
-    tokens: [
-      { id: 'p1-0-233', c: '子' },
-      { id: 'p1-1-189', c: '曰' },
-      { id: 'p1-2-201', c: '：' },
-      { id: 'p1-3-055', c: '“' },
-      { id: 'p1-4-122', c: '以' },
-      { id: 'p1-5-078', c: '吾' },
-      { id: 'p1-6-045', c: '一' },
-      { id: 'p1-7-156', c: '日' },
-      { id: 'p1-8-211', c: '长' },
-      { id: 'p1-9-087', c: '乎' },
-      { id: 'p1-10-134', c: '尔' },
-      { id: 'p1-11-177', c: '，' },
-      { id: 'p1-12-098', c: '毋' },
-      { id: 'p1-13-078', c: '吾' },
-      { id: 'p1-14-122', c: '以' },
-      { id: 'p1-15-066', c: '也' },
-      { id: 'p1-16-199', c: '。' },
-    ],
-  },
-  translation: {
-    tokens: [
-      { id: 'tr1', c: '孔子' },
-      { id: 'tr2', c: '说' },
-      { id: 'tr3', c: '：' },
-      { id: 'tr4', c: '“' },
-      { id: 'tr5', c: '因为' },
-      { id: 'tr6', c: '我' },
-      { id: 'tr7', c: '年纪' },
-      { id: 'tr8', c: '比' },
-      { id: 'tr9', c: '你们' },
-      { id: 'tr10', c: '大一点' },
-      { id: 'tr11', c: '，' },
-      { id: 'tr12', c: '（' },
-      { id: 'tr13', c: '你们' },
-      { id: 'tr14', c: '）' },
-      { id: 'tr15', c: '不要' },
-      { id: 'tr16', c: '因为' },
-      { id: 'tr17', c: '我' },
-      { id: 'tr18', c: '（' },
-      { id: 'tr19', c: '年长' },
-      { id: 'tr20', c: '）' },
-      { id: 'tr21', c: '就' },
-      { id: 'tr22', c: '不' },
-      { id: 'tr23', c: '说话' },
-      { id: 'tr24', c: '了' },
-      { id: 'tr25', c: '。' },
-      { id: 'tr26', c: '”' },
-    ],
-  },
-  connections: [
-  ],
+const sentenceData = ref(<wySentence>[
+  { o: "子", t: "孔子" },
+  { o: "曰aaa", t: "说" },
+  { o: "：“", t: "：“" },
+  { o: "以", t: "因为" },
+  { o: "吾一日", t: "我年纪比你们" },
+  { o: "长乎尔", t: "大一点" },
+  { o: "", t: "（你们）" },
+  { o: "毋吾", t: "不要因为我（年长）" },
+  { o: "", t: "就" },
+  { o: "以", t: "不敢说话" },
+  { o: "也。”", t: "了。”" },
+])
+
+const originalWords = computed(() => sentenceData.value.map(item => {
+  return {
+    text: item.o,
+  }
+}))
+
+const translationWords = computed(() => sentenceData.value.map(item => {
+  return {
+    text: item.t,
+  }
+}))
+
+const original = useTemplateRef<HTMLElement>("original")
+const translation = useTemplateRef<HTMLElement>("translation")
+// 使用margin-left对齐
+const alignWords = () => {
+  if (!original.value || !translation.value) return
+  const originalWords = original.value.querySelectorAll(".word")
+  const translationWords = translation.value.querySelectorAll(".word")
+  for (let i = 0; i < originalWords.length; i++) {
+    const originalWord = originalWords[i] as HTMLElement
+    const translationWord = translationWords[i] as HTMLElement
+    const originalWidth = originalWord.offsetWidth
+    const translationWidth = translationWord.offsetWidth
+    if (originalWidth > translationWidth) {
+      translationWord.style.marginLeft = `${(originalWidth - translationWidth)}px`
+    } else {
+      originalWord.style.marginLeft = `${(translationWidth - originalWidth)}px`
+    }
+  }
+}
+
+onMounted(() => {
+  setTimeout(alignWords, 0)
 })
+
 </script>
 
-<style scoped></style>
+<style scoped>
+/* 分割线 */
+.divider {
+  height: 1px;
+  background-color: #ccc;
+  margin: 2px 0;
+}
+
+/* 单行 */
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.original {
+  color: #333;
+}
+
+.translation {
+  color: #666;
+}
+
+/* 单词 */
+.word {
+  display: inline;
+  white-space: nowrap;
+}
+</style>

@@ -1,42 +1,17 @@
 interface exercise {
   title: string
   subtitle: object
-  content: exerciseContent[]
+  content: wyContent
 }
 
-interface exerciseSentence {
-  type?: string
-  original: exerciseContent
-  translation?: exerciseContent
-  connections?: exerciseContentConnection[]
+interface wySentencePart {
+  o: string // original
+  t: string // translation
+  extra?: object
 }
 
-interface exerciseContent {
-  text?: string
-  tokens?: exerciseContentToken[]
-}
+type wySentence = wySentencePart[]
 
-interface exerciseContentToken {
-  id: string
-  c: string // char
-}
+type wyContent = wySentence[]
 
-interface exerciseContentConnection {
-  type: 'combine'
-  from: {
-    start: string
-    end: string
-  }[]
-  to: {
-    start: string
-    end: string
-  }[]
-}
-
-export {
-  exercise,
-  exerciseSentence,
-  exerciseContent,
-  exerciseContentToken,
-  exerciseContentConnection,
-}
+export { exercise, wyContent, wySentence, wySentencePart }
